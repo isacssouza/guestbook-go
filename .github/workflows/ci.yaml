@@ -2,10 +2,9 @@ name: Demo CI
 
 on:   
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `main` as Docker `latest` image.
     branches:
-      - master
-      - seed
+      - main
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -27,9 +26,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set variables
+        run: |
+          version=manual-${GITHUB_RUN_ID}
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            version=pr-${GITHUB_RUN_ID}
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            version=$(<VERSION)
+          fi
+
+          echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "REGISTRY=ghcr.io/${{ github.repository_owner }}" >> $GITHUB_ENV
+
       - name: Build image
         run: |
-          VERSION=pr-${GITHUB_RUN_ID} REGISTRY=ghcr.io/${{ github.repository_owner }} make build
+          make build
 
       - name: Log in to registry
         run: |
@@ -37,4 +48,4 @@ jobs:
 
       - name: Push image
         run: |
-          VERSION=pr-${GITHUB_RUN_ID} REGISTRY=ghcr.io/${{ github.repository_owner }} make push
+          make push

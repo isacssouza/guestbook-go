@@ -17,7 +17,7 @@
 # Usage:
 #   [VERSION=v3] [REGISTRY="staging-k8s.gcr.io"] make build
 VERSION?=v3
-REGISTRY?=ghcr.io/isouza-daitan/guestbook-go
+REGISTRY?=guestbook-go
 
 release: clean build push clean
 
