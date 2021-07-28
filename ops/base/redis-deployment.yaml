@@ -1,0 +1,21 @@
+kind: Deployment
+apiVersion: v1
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: k8s.gcr.io/redis:e2e
+          ports:
+            - name: redis-server
+              containerPort: 6379

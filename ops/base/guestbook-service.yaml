@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1,
+metadata:
+  name: guestbook,
+spec:
+  selector:
+    app: guestbook
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http-server

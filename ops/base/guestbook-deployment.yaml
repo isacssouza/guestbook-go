@@ -17,4 +17,5 @@ spec:
       - name: guestbook
         image: ""
         ports:
-        - containerPort: 80
+        - name: http-server
+          containerPort: 3000

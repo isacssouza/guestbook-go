@@ -1,2 +1,5 @@
 resources:
   - guestbook-deployment.yaml
+  - guestbook-service.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
