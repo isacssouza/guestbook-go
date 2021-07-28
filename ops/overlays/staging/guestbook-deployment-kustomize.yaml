@@ -7,4 +7,4 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: ghcr.io/isouza-daitan/guestbook:v1.0
+        image: ghcr.io/isouza-daitan/guestbook:v1.2
