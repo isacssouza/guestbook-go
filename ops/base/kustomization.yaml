@@ -1,0 +1,2 @@
+resources:
+  - guestbook-deployment.yaml
