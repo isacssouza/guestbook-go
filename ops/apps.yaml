@@ -14,3 +14,9 @@ spec:
     repoURL: https://github.com/isouza-daitan/guestbook-go
     path: ops/gitops
     targetRevision: app-of-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
