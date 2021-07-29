@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: ""
+        image: guestbook-image # will be replaced by kustomize
         ports:
         - name: http-server
           containerPort: 3000
