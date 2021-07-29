@@ -51,7 +51,7 @@ jobs:
           make push
 
       - name: Sync PR environment
-        if: github.event_name == "pull_request"
+        if: github.event_name == 'pull_request'
         run: |
           argocd app create guestbook-pr \
             --upsert \
