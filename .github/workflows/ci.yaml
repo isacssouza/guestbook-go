@@ -49,18 +49,3 @@ jobs:
       - name: Push image
         run: |
           make push
-
-      - name: Sync PR environment
-        if: github.event_name == "pull_request"
-        run: |
-          argocd app create guestbook-pr \
-            --upsert \
-            --repo https://github.com/${{ github.repository }} \
-            --path ops/overlays/pr \
-            --revision ${{ github.sha	}}
-            --dest-server https://kubernetes.default.svc \
-            --dest-namespace guestbook-pr \
-            --sync-policy none \
-            --kustomize-image guestbook-image=${{ env.REGISTRY }}/guestbook:${{ env.VERSION }}
-
-          argocd app sync guestbook-pr
