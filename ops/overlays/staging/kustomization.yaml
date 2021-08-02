@@ -1,4 +1,0 @@
-bases:
-  - ../../base
-patches:
-  - guestbook-deployment-kustomize.yaml
