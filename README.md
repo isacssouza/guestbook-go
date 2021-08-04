@@ -82,7 +82,7 @@ We will use the Go version of the [Guestbook sample application](https://github.
 to create a CI pipeline which publishes a docker image to GitHub Packages and triggers a deployment 
 to a PR environment using Git.
 
-This repository contains the application source code and the [guestbook-go-config](../guestbook-go-config) repository contains 
+This repository contains the application source code and the [guestbook-go-config](../../../guestbook-go-config) repository contains 
 the Kubernetes and ArgoCD manifests to deploy the application. Using a separate repository for configuration is one of the best practices of GitOps.
 
 ### ArgoCD Applications
