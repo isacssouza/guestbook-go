@@ -85,6 +85,12 @@ to a PR environment using Git.
 This repository contains the application source code and the [guestbook-go-config](../../../guestbook-go-config) repository contains 
 the Kubernetes and ArgoCD manifests to deploy the application. Using a separate repository for configuration is one of the best practices of GitOps.
 
+Now go ahead and fork both repositories into your GitHub account.
+
+### Continuous Integration
+
+For this application we have a very simple CI pipeline that uses GitHub Actions to build a docker image and publishes it to GitHub Packages. Take a look at the workflow definition in the [.github/workflows](.github/workflows) directory.
+
 ### ArgoCD Applications
 
 From https://argoproj.github.io/argo-cd/operator-manual/declarative-setup/#applications:
