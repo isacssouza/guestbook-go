@@ -88,9 +88,13 @@ jobs:
             --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:${{ needs.build-image.outputs.version }} \
           > apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
 
-          git config user.email "guestbook-go-ci@example.com"
-          git config user.name "guestbook-go CI"
+          needs_commit=$(git diff-index --quiet HEAD -- || echo "true")
 
-          git add apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
-          git commit -m "Add new app for ${{ needs.build-image.outputs.version }}"
-          git push origin main
+          if [[ "${needs_commit}" == "true" ]]; then
+            git config user.email "guestbook-go-ci@example.com"
+            git config user.name "guestbook-go CI"
+
+            git add apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
+            git commit -m "Add new app for ${{ needs.build-image.outputs.version }}"
+            git push origin main
+          fi
