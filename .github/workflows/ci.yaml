@@ -65,6 +65,7 @@ jobs:
       - name: Create new env for PR
         run: |
           ./argocd-util app generate-spec guestbook-pr-${GITHUB_RUN_ID} \
+            --project default \
             --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
             --path overlays/pr \
             --dest-namespace guestbook-pr-${GITHUB_RUN_ID} \
