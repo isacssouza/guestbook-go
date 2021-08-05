@@ -31,7 +31,7 @@ jobs:
         run: |
           version=manual-${GITHUB_RUN_ID}
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            version=pr-${{ github.event.number }}
+            version=pr-${{ github.event.number }}-${GITHUB_RUN_ID}
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             version=$(<VERSION)
           fi
@@ -75,13 +75,14 @@ jobs:
 
       - name: Create new env for PR
         run: |
-          app_file="apps/guestbook-${{ needs.build-image.outputs.version }}.yaml"
+          app_name="guestbook-pr-${{ github.event.number }}"
+          app_file="apps/${app_name}.yaml"
 
-          ./argocd-util app generate-spec guestbook-${{ needs.build-image.outputs.version }} \
+          ./argocd-util app generate-spec ${app_name} \
             --project default \
             --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
             --path overlays/pr \
-            --dest-namespace guestbook-${{ needs.build-image.outputs.version }} \
+            --dest-namespace ${app_name} \
             --dest-server https://kubernetes.default.svc \
             --sync-policy automated \
             --auto-prune \
@@ -97,6 +98,6 @@ jobs:
             git config user.name "guestbook-go CI"
 
             git add ${app_file}
-            git commit -m "Add new app for ${{ needs.build-image.outputs.version }}"
+            git commit -m "Add new app ${app_name}"
             git push origin main
           fi
