@@ -88,7 +88,7 @@ jobs:
             --auto-prune \
             --self-heal \
             --sync-option CreateNamespace=true \
-            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook-go:${{ needs.build-image.outputs.version }} \
+            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
           > ${app_file}
 
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
