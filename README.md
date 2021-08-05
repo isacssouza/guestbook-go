@@ -132,6 +132,13 @@ kubectl -n guestbook-pr port-forward service/guestbook 8080:3000
 
 And access the guestbook at http://localhost:8080/
 
-### Now 
-
 ### App of Apps
+
+With ArgoCD you can create an app that creates other apps, which in turn can create other apps. This allows you to declaratively manage a group of apps that can be deployed and configured in concert.
+
+Let's create an app of apps to manage our guestbook environments:
+```sh
+kubectl apply -f guestbook-apps.yaml
+```
+
+Now check the ArgoCD dashboard to see the new apps.
