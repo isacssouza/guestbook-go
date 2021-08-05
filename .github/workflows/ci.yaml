@@ -87,7 +87,7 @@ jobs:
           ./argocd-util app generate-spec \
             --file apps/${input_file_name} \
             --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
-          | envsubst > temp-app-file.yaml
+          | envsubst | tee temp-app-file.yaml
           mv temp-app-file.yaml ${app_file}
 
           git add ${app_file} # must add before diffing
