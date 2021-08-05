@@ -86,7 +86,9 @@ jobs:
           app_name="guestbook-${env_name}"
           app_file="apps/${app_name}.yaml"
 
-          ./argocd-util app generate-spec --file apps/${input_file_name} --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} | tee ${app_file}
+          ./argocd-util --help
+          cat apps/${input_file_name}
+          ./argocd-util app generate-spec --file apps/${input_file_name} --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }}
 
           git add ${app_file} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
