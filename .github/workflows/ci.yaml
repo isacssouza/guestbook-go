@@ -75,6 +75,8 @@ jobs:
 
       - name: Create new env for PR
         run: |
+          app_file="apps/guestbook-${{ needs.build-image.outputs.version }}.yaml"
+
           ./argocd-util app generate-spec guestbook-${{ needs.build-image.outputs.version }} \
             --project default \
             --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
@@ -86,15 +88,15 @@ jobs:
             --self-heal \
             --sync-option CreateNamespace=true \
             --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:${{ needs.build-image.outputs.version }} \
-          > apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
+          > ${app_file}
 
-          needs_commit=$(git diff-index --quiet HEAD -- || echo "true")
+          needs_commit=$(git diff-index --quiet HEAD ${app_file} || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
             git config user.email "guestbook-go-ci@example.com"
             git config user.name "guestbook-go CI"
 
-            git add apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
+            git add ${app_file}
             git commit -m "Add new app for ${{ needs.build-image.outputs.version }}"
             git push origin main
           fi
