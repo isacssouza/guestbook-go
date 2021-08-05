@@ -2,40 +2,45 @@ name: Demo CI
 
 on:   
   push:
-    # Publish `main` as Docker `latest` image.
     branches:
       - main
 
-  # Run CI for any PRs.
   pull_request:
-  
+
   # Run manually.
   workflow_dispatch:
 
 jobs:
-  # Push image to GitHub Packages.
-  push:
+  build-image:
     runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
 
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+      registry: ${{ steps.variables.outputs.registry }}
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Set variables
+        id: variables
         run: |
           version=manual-${GITHUB_RUN_ID}
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            version=pr-${GITHUB_RUN_ID}
+            version=pr-${{ github.event.number }}-${GITHUB_RUN_ID}
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             version=$(<VERSION)
           fi
 
-          echo "VERSION=${version}" >> $GITHUB_ENV
-          echo "REGISTRY=ghcr.io/${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "::set-output name=version::${version}"
+          echo "::set-output name=registry::ghcr.io/${{ github.repository_owner }}"
 
       - name: Build image
+        env:
+          VERSION: ${{ steps.variables.outputs.version }}
+          REGISTRY: ${{ steps.variables.outputs.registry }}
         run: |
           make build
 
@@ -44,5 +49,53 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push image
+        env:
+          VERSION: ${{ steps.variables.outputs.version }}
+          REGISTRY: ${{ steps.variables.outputs.registry }}
         run: |
           make push
+
+  trigger-deployment:
+    needs: build-image
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository_owner }}/guestbook-go-config
+          token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
+
+      - name: Setup argocd-util
+        run: |
+          curl -L -o argocd-util "https://github.com/argoproj/argo-cd/releases/download/v2.0.5/argocd-util-linux-amd64"
+          chmod +x argocd-util
+
+      - name: Create or update env
+        run: |
+          env_name="staging"
+          input_file_name="guestbook-staging.yaml"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            env_name="pr-${{ github.event.number }}"
+            input_file_name="guestbook-pr.yaml.template"
+          fi
+          export ENV_NAME="${env_name}"
+
+          app_name="guestbook-${env_name}"
+          app_file="apps/${app_name}.yaml"
+
+          ./argocd-util app generate-spec \
+            --file apps/${input_file_name} \
+            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
+          | envsubst > ${app_file}
+
+          git add ${app_file} # must add before diffing
+          needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
+
+          if [[ "${needs_commit}" == "true" ]]; then
+            git config user.email "guestbook-go-ci@example.com"
+            git config user.name "guestbook-go CI"
+
+            git commit -m "Add new app ${app_name}"
+            git push origin main
+          fi
