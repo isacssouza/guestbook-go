@@ -19,10 +19,15 @@ jobs:
       packages: write
       contents: read
 
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+      registry: ${{ steps.variables.outputs.registry }}
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Set variables
+        id: variables
         run: |
           version=manual-${GITHUB_RUN_ID}
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -31,10 +36,13 @@ jobs:
             version=$(<VERSION)
           fi
 
-          echo "VERSION=${version}" >> $GITHUB_ENV
-          echo "REGISTRY=ghcr.io/${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "::set-output name=version::${version}"
+          echo "::set-output name=registry::ghcr.io/${{ github.repository_owner }}"
 
       - name: Build image
+        env:
+          VERSION: ${{ steps.variables.outputs.version }}
+          REGISTRY: ${{ steps.variables.outputs.registry }}
         run: |
           make build
 
@@ -43,6 +51,9 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push image
+        env:
+          VERSION: ${{ steps.variables.outputs.version }}
+          REGISTRY: ${{ steps.variables.outputs.registry }}
         run: |
           make push
 
@@ -64,22 +75,22 @@ jobs:
 
       - name: Create new env for PR
         run: |
-          ./argocd-util app generate-spec guestbook-pr-${{ github.event.number }} \
+          ./argocd-util app generate-spec guestbook-${{ needs.build-image.outputs.version }} \
             --project default \
             --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
             --path overlays/pr \
-            --dest-namespace guestbook-pr-${{ github.event.number }} \
+            --dest-namespace guestbook-${{ needs.build-image.outputs.version }} \
             --dest-server https://kubernetes.default.svc \
             --sync-policy automated \
             --auto-prune \
             --self-heal \
             --sync-option CreateNamespace=true \
-            --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:pr-${{ github.event.number }} \
-          > apps/guestbook-pr-${{ github.event.number }}.yaml
+            --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:${{ needs.build-image.outputs.version }} \
+          > apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
 
           git config user.email "guestbook-go-ci@example.com"
           git config user.name "guestbook-go CI"
 
-          git add apps/guestbook-pr-${{ github.event.number }}.yaml
-          git commit -m "Add new app for pr ${{ github.event.number }}"
+          git add apps/guestbook-${{ needs.build-image.outputs.version }}.yaml
+          git commit -m "Add new app for ${{ needs.build-image.outputs.version }}"
           git push origin main
