@@ -73,6 +73,8 @@ jobs:
 
       - name: Create or update env
         run: |
+          set -x
+
           env_name="staging"
           input_file_name="guestbook-staging.yaml"
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -84,10 +86,7 @@ jobs:
           app_name="guestbook-${env_name}"
           app_file="apps/${app_name}.yaml"
 
-          ./argocd-util app generate-spec \
-            --file apps/${input_file_name} \
-            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
-          | envsubst > ${app_file}
+          ./argocd-util app generate-spec --file apps/${input_file_name} --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} | envsubst > ${app_file}
 
           git add ${app_file} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
