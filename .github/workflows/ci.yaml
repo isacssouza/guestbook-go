@@ -91,13 +91,13 @@ jobs:
             --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
           > ${app_file}
 
+          git add ${app_file} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
             git config user.email "guestbook-go-ci@example.com"
             git config user.name "guestbook-go CI"
 
-            git add ${app_file}
             git commit -m "Add new app ${app_name}"
             git push origin main
           fi
