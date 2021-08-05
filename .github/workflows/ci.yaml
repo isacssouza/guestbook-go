@@ -6,12 +6,9 @@ on:
     branches:
       - main
 
-    # Publish `v1.2.3` tags as releases.
-    tags:
-      - v*
-
-  # Run tests for any PRs.
+  # Run CI for any PRs.
   pull_request:
+  
   # Run manually.
   workflow_dispatch:
 
