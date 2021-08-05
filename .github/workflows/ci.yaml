@@ -47,6 +47,7 @@ jobs:
           make push
 
   trigger-deployment:
+    needs: build-image
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -74,6 +75,9 @@ jobs:
             --sync-option CreateNamespace=true \
             --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:pr-${GITHUB_RUN_ID} \
           > apps/guestbook-pr-${GITHUB_RUN_ID}.yaml
+
+          git config user.email "guestbook-go-ci@example.com"
+          git config user.name "guestbook-go CI"
 
           git add apps/guestbook-pr-${GITHUB_RUN_ID}.yaml
           git commit -m "Add new app for pr ${GITHUB_RUN_ID}"
