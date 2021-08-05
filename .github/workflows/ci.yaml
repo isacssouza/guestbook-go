@@ -2,11 +2,9 @@ name: Demo CI
 
 on:   
   push:
-    # Publish `main` as Docker `latest` image.
     branches:
       - main
 
-  # Run CI for any PRs.
   pull_request:
 
   # Run manually.
@@ -60,7 +58,7 @@ jobs:
   trigger-deployment:
     needs: build-image
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name != 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v2
@@ -73,23 +71,23 @@ jobs:
           curl -L -o argocd-util "https://github.com/argoproj/argo-cd/releases/download/v2.0.5/argocd-util-linux-amd64"
           chmod +x argocd-util
 
-      - name: Create new env for PR
+      - name: Create or update env
         run: |
-          app_name="guestbook-pr-${{ github.event.number }}"
+          env_name="staging"
+          input_file_name="guestbook-staging.yaml"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            env_name="pr-${{ github.event.number }}"
+            input_file_name="guestbook-pr.yaml.template"
+          fi
+          export ENV_NAME="${env_name}"
+
+          app_name="guestbook-${env_name}"
           app_file="apps/${app_name}.yaml"
 
-          ./argocd-util app generate-spec ${app_name} \
-            --project default \
-            --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
-            --path overlays/pr \
-            --dest-namespace ${app_name} \
-            --dest-server https://kubernetes.default.svc \
-            --sync-policy automated \
-            --auto-prune \
-            --self-heal \
-            --sync-option CreateNamespace=true \
+          ./argocd-util app generate-spec \
+            --file apps/${input_file_name} \
             --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
-          > ${app_file}
+          | envsubst > ${app_file}
 
           git add ${app_file} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
