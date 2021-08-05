@@ -8,13 +8,12 @@ on:
 
   # Run CI for any PRs.
   pull_request:
-  
+
   # Run manually.
   workflow_dispatch:
 
 jobs:
-  # Push image to GitHub Packages.
-  push:
+  build-image:
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -46,3 +45,36 @@ jobs:
       - name: Push image
         run: |
           make push
+
+  trigger-deployment:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository_owner }}/guestbook-go-config
+          token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
+
+      - name: Setup argocd-util
+        run: |
+          curl -L -o argocd-util "https://github.com/argoproj/argo-cd/releases/download/v2.0.5/argocd-util-linux-amd64"
+          chmod +x argocd-util
+
+      - name: Create new env for PR
+        run: |
+          ./argocd-util app generate-spec guestbook-pr-${GITHUB_RUN_ID} \
+            --repo https://github.com/${{ github.repository_owner }}/guestbook-go-config \
+            --path overlays/pr \
+            --dest-namespace guestbook-pr-${GITHUB_RUN_ID} \
+            --dest-server https://kubernetes.default.svc \
+            --sync-policy automated \
+            --sync-option Prune=true \
+            --sync-option SelfHeal=true \
+            --sync-option CreateNamespace=true \
+            --kustomize-image ghcr.io/${{ github.repository_owner }}/guestbook-go:pr-${GITHUB_RUN_ID} \
+          > apps/guestbook-pr-${GITHUB_RUN_ID}.yaml
+
+          git add apps/guestbook-pr-${GITHUB_RUN_ID}.yaml
+          git commit -m "Add new app for pr ${GITHUB_RUN_ID}"
+          git push origin main
