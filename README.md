@@ -91,6 +91,8 @@ Now go ahead and fork both repositories into your GitHub account.
 
 For this application we have a very simple CI pipeline that uses GitHub Actions to build a docker image and publishes it to GitHub Packages. Take a look at the workflow definition in the [.github/workflows](.github/workflows) directory.
 
+To setup our first guestbook image we will manually trigger a workflow run at https://github.com/isouza-daitan/guestbook-go/actions/workflows/ci.yaml
+
 ### ArgoCD Applications
 
 From https://argoproj.github.io/argo-cd/operator-manual/declarative-setup/#applications:
@@ -121,6 +123,14 @@ spec:
 ### Let's create our first Application
 
 Head over to https://localhost:8443/ and create your first application using the Web UI.
+
+After the application is deployed, setup a port-forward for it:
+
+```sh
+kubectl -n guestbook-pr port-forward service/guestbook 8080:3000
+```
+
+And access the guestbook at http://localhost:8080/
 
 ### Now 
 
