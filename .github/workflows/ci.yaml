@@ -27,10 +27,8 @@ jobs:
       - name: Set variables
         id: variables
         run: |
-          version=manual-${GITHUB_RUN_ID}
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            version=pr-${{ github.event.number }}-${GITHUB_RUN_ID}
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
+          version=${GITHUB_SHA}
+          if [[ "${{ github.event_name }}" == "push" ]]; then
             version=$(<VERSION)
           fi
 
@@ -66,29 +64,41 @@ jobs:
           repository: ${{ github.repository_owner }}/guestbook-go-config
           token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
 
-      - name: Setup argocd-util
-        run: |
-          curl -L -o argocd-util "https://github.com/argoproj/argo-cd/releases/download/v2.0.5/argocd-util-linux-amd64"
-          chmod +x argocd-util
-
       - name: Create or update env
         run: |
           env_name="staging"
-          input_file_name="guestbook-staging.yaml"
+          overlay="staging"
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             env_name="pr-${{ github.event.number }}"
-            input_file_name="guestbook-pr.yaml.template"
+            overlay="pr"
           fi
-          export ENV_NAME="${env_name}"
 
           app_name="guestbook-${env_name}"
           app_file="apps/${app_name}.yaml"
 
-          ./argocd-util app generate-spec \
-            --file apps/${input_file_name} \
-            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
-          | envsubst | tee temp-app-file.yaml
-          mv temp-app-file.yaml ${app_file}
+          cat <<EOF > ${app_file}
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${app_name}
+          spec:
+            destination:
+              namespace: ${app_name}
+              server: https://kubernetes.default.svc
+            project: default
+            source:
+              kustomize:
+                images:
+                  - ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }}
+              path: overlays/${overlay}
+              repoURL: https://github.com/isouza-daitan/guestbook-go-config
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+          EOF
 
           git add ${app_file} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
