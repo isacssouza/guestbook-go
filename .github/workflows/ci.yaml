@@ -97,7 +97,7 @@ jobs:
             source:
               kustomize:
                 images:
-                  - ${{ needs.build-image.outputs.registry }}/guestbook
+                  - guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook
               path: overlays/pr
               repoURL: https://github.com/${{ github.repository_owner }}/guestbook-go-config
             syncPolicy:
