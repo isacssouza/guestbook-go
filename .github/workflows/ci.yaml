@@ -81,11 +81,6 @@ jobs:
           repository: ${{ github.repository_owner }}/guestbook-go-config
           token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
       
-      - name: Create PR branch on guestbook-go-config
-        if: github.event_name == 'pull_request'
-        run: |
-          git checkout ${{ github.head_ref }} || git checkout -b ${{ github.head_ref }}
-
       - name: Create or update PR env
         if: github.event_name == 'pull_request'
         run: |
@@ -102,7 +97,6 @@ jobs:
             source:
               repoURL: https://github.com/${{ github.repository_owner }}/guestbook-go-config
               path: overlays/pr
-              targetRevision: ${{ github.head_ref }}
             syncPolicy:
               automated:
                 prune: true
@@ -120,11 +114,6 @@ jobs:
 
       - name: Commit and push app file
         run: |
-          target_branch="main"
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            target_branch="${{ github.head_ref }}"
-          fi
-
           git add ${{ needs.build-image.outputs.app-file }} # must add before diffing
           needs_commit=$(git diff --quiet HEAD ${{ needs.build-image.outputs.app-file }} || echo "true")
 
@@ -133,5 +122,5 @@ jobs:
             git config user.name "guestbook-go CI"
 
             git commit -m "Update app ${{ needs.build-image.outputs.app-name }}"
-            git push origin ${target_branch}
+            git push origin main
           fi
