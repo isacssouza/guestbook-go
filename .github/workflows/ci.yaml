@@ -116,11 +116,7 @@ jobs:
       - name: Update app image
         uses: mikefarah/yq@master
         with:
-          cmd: >-
-            yq eval
-              --inplace
-              '.spec.source.kustomize.images[0] = "guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"'
-              ${{ needs.build-image.outputs.app-file }}
+          cmd: yq eval --inplace '.spec.source.kustomize.images[0] = "guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"' ${{ needs.build-image.outputs.app-file }}
 
       - name: Commit and push app file
         run: |
