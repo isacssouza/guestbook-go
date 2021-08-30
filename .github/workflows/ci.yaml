@@ -89,6 +89,9 @@ jobs:
           kind: Application
           metadata:
             name: ${{ needs.build-image.outputs.app-name }}
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
           spec:
             destination:
               namespace: ${{ needs.build-image.outputs.app-name }}
