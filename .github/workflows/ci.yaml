@@ -20,6 +20,9 @@ jobs:
     outputs:
       version: ${{ steps.variables.outputs.version }}
       registry: ${{ steps.variables.outputs.registry }}
+      env-name: ${{ steps.variables.outputs.env-name }}
+      app-name: ${{ steps.variables.outputs.app-name }}
+      app-file: ${{ steps.variables.outputs.app-file }}
 
     steps:
       - uses: actions/checkout@v2
@@ -27,15 +30,27 @@ jobs:
       - name: Set variables
         id: variables
         run: |
-          version=manual-${GITHUB_RUN_ID}
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            version=pr-${{ github.event.number }}-${GITHUB_RUN_ID}
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
+          version=${GITHUB_SHA}
+          if [[ "${{ github.event_name }}" == "push" ]]; then
             version=$(<VERSION)
           fi
 
+          env_name="staging"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            pr_number="${{ github.event.number }}"
+            env_name="pr-${pr_number:-1}"
+          fi
+
+          app_name="guestbook-${env_name}"
+          app_file="apps/${app_name}.yaml"
+
           echo "::set-output name=version::${version}"
           echo "::set-output name=registry::ghcr.io/${{ github.repository_owner }}"
+          echo "::set-output name=env-name::${env_name}"
+          echo "::set-output name=app-name::${app_name}"
+          echo "::set-output name=app-file::${app_file}"
+
+      # - uses: actions/checkout@v2
 
       - name: Build image
         env:
@@ -65,38 +80,47 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/guestbook-go-config
           token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
-
-      - name: Setup argocd-util
+      
+      - name: Create or update PR env
+        if: github.event_name == 'pull_request'
         run: |
-          curl -L -o argocd-util "https://github.com/argoproj/argo-cd/releases/download/v2.0.5/argocd-util-linux-amd64"
-          chmod +x argocd-util
+          cat <<EOF > ${{ needs.build-image.outputs.app-file }}
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${{ needs.build-image.outputs.app-name }}
+          spec:
+            destination:
+              namespace: ${{ needs.build-image.outputs.app-name }}
+              server: https://kubernetes.default.svc
+            project: default
+            source:
+              repoURL: https://github.com/${{ github.repository_owner }}/guestbook-go-config
+              path: overlays/pr
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+          EOF
 
-      - name: Create or update env
+          echo ${{ needs.build-image.outputs.app-file }}
+
+      - name: Update app image
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval --inplace '.spec.source.kustomize.images[0] = "guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"' ${{ needs.build-image.outputs.app-file }}
+
+      - name: Commit and push app file
         run: |
-          env_name="staging"
-          input_file_name="guestbook-staging.yaml"
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            env_name="pr-${{ github.event.number }}"
-            input_file_name="guestbook-pr.yaml.template"
-          fi
-          export ENV_NAME="${env_name}"
-
-          app_name="guestbook-${env_name}"
-          app_file="apps/${app_name}.yaml"
-
-          ./argocd-util app generate-spec \
-            --file apps/${input_file_name} \
-            --kustomize-image guestbook-image=ghcr.io/${{ github.repository_owner }}/guestbook:${{ needs.build-image.outputs.version }} \
-          | envsubst | tee temp-app-file.yaml
-          mv temp-app-file.yaml ${app_file}
-
-          git add ${app_file} # must add before diffing
-          needs_commit=$(git diff --quiet HEAD ${app_file} || echo "true")
+          git add ${{ needs.build-image.outputs.app-file }} # must add before diffing
+          needs_commit=$(git diff --quiet HEAD ${{ needs.build-image.outputs.app-file }} || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
             git config user.email "guestbook-go-ci@example.com"
             git config user.name "guestbook-go CI"
 
-            git commit -m "Add new app ${app_name}"
+            git commit -m "Update app ${{ needs.build-image.outputs.app-name }}"
             git push origin main
           fi
