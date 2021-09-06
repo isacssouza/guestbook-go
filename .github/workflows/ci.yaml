@@ -81,39 +81,12 @@ jobs:
           repository: ${{ github.repository_owner }}/guestbook-go-config
           token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
       
-      - name: Create or update PR env
-        if: github.event_name == 'pull_request'
-        run: |
-          cat <<EOF > ${{ needs.build-image.outputs.app-file }}
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: ${{ needs.build-image.outputs.app-name }}
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
-          spec:
-            destination:
-              namespace: ${{ needs.build-image.outputs.app-name }}
-              server: https://kubernetes.default.svc
-            project: default
-            source:
-              repoURL: https://github.com/${{ github.repository_owner }}/guestbook-go-config
-              path: overlays/pr
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-              - CreateNamespace=true
-          EOF
-
-          echo ${{ needs.build-image.outputs.app-file }}
+      - uses: imranismail/setup-kustomize@v1
 
       - name: Update app image
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq eval --inplace '.spec.source.kustomize.images[0] = "guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"' ${{ needs.build-image.outputs.app-file }}
+        run: |
+          cd overlays/${{ needs.build-image.outputs.env-name }}
+          kustomize edit set image "guestbook=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"
 
       - name: Commit and push app file
         run: |
