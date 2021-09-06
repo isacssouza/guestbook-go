@@ -22,7 +22,6 @@ jobs:
       registry: ${{ steps.variables.outputs.registry }}
       env-name: ${{ steps.variables.outputs.env-name }}
       app-name: ${{ steps.variables.outputs.app-name }}
-      app-file: ${{ steps.variables.outputs.app-file }}
 
     steps:
       - uses: actions/checkout@v2
@@ -37,18 +36,15 @@ jobs:
 
           env_name="staging"
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            pr_number="${{ github.event.number }}"
-            env_name="pr-${pr_number:-1}"
+            env_name="pr"
           fi
 
           app_name="guestbook-${env_name}"
-          app_file="apps/${app_name}.yaml"
 
           echo "::set-output name=version::${version}"
           echo "::set-output name=registry::ghcr.io/${{ github.repository_owner }}"
           echo "::set-output name=env-name::${env_name}"
           echo "::set-output name=app-name::${app_name}"
-          echo "::set-output name=app-file::${app_file}"
 
       # - uses: actions/checkout@v2
 
@@ -90,8 +86,7 @@ jobs:
 
       - name: Commit and push app file
         run: |
-          git add ${{ needs.build-image.outputs.app-file }} # must add before diffing
-          needs_commit=$(git diff --quiet HEAD ${{ needs.build-image.outputs.app-file }} || echo "true")
+          needs_commit=$(git diff --quiet HEAD || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
             git config user.email "guestbook-go-ci@example.com"
