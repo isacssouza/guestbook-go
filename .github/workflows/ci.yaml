@@ -22,7 +22,6 @@ jobs:
       registry: ${{ steps.variables.outputs.registry }}
       env-name: ${{ steps.variables.outputs.env-name }}
       app-name: ${{ steps.variables.outputs.app-name }}
-      app-file: ${{ steps.variables.outputs.app-file }}
 
     steps:
       - uses: actions/checkout@v2
@@ -37,18 +36,15 @@ jobs:
 
           env_name="staging"
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            pr_number="${{ github.event.number }}"
-            env_name="pr-${pr_number:-1}"
+            env_name="pr"
           fi
 
           app_name="guestbook-${env_name}"
-          app_file="apps/${app_name}.yaml"
 
           echo "::set-output name=version::${version}"
           echo "::set-output name=registry::ghcr.io/${{ github.repository_owner }}"
           echo "::set-output name=env-name::${env_name}"
           echo "::set-output name=app-name::${app_name}"
-          echo "::set-output name=app-file::${app_file}"
 
       # - uses: actions/checkout@v2
 
@@ -81,44 +77,17 @@ jobs:
           repository: ${{ github.repository_owner }}/guestbook-go-config
           token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
       
-      - name: Create or update PR env
-        if: github.event_name == 'pull_request'
-        run: |
-          cat <<EOF > ${{ needs.build-image.outputs.app-file }}
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: ${{ needs.build-image.outputs.app-name }}
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
-          spec:
-            destination:
-              namespace: ${{ needs.build-image.outputs.app-name }}
-              server: https://kubernetes.default.svc
-            project: default
-            source:
-              repoURL: https://github.com/${{ github.repository_owner }}/guestbook-go-config
-              path: overlays/pr
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-              - CreateNamespace=true
-          EOF
-
-          echo ${{ needs.build-image.outputs.app-file }}
+      - uses: imranismail/setup-kustomize@v1
 
       - name: Update app image
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq eval --inplace '.spec.source.kustomize.images[0] = "guestbook-image=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"' ${{ needs.build-image.outputs.app-file }}
+        run: |
+          cd overlays/${{ needs.build-image.outputs.env-name }}
+          kustomize edit set image "guestbook=${{ needs.build-image.outputs.registry }}/guestbook:${{ needs.build-image.outputs.version }}"
 
       - name: Commit and push app file
         run: |
-          git add ${{ needs.build-image.outputs.app-file }} # must add before diffing
-          needs_commit=$(git diff --quiet HEAD ${{ needs.build-image.outputs.app-file }} || echo "true")
+          git add overlays/${{ needs.build-image.outputs.env-name }}
+          needs_commit=$(git diff --quiet HEAD || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
             git config user.email "guestbook-go-ci@example.com"
