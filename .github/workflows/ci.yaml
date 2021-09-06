@@ -86,6 +86,7 @@ jobs:
 
       - name: Commit and push app file
         run: |
+          git add overlays/${{ needs.build-image.outputs.env-name }}
           needs_commit=$(git diff --quiet HEAD || echo "true")
 
           if [[ "${needs_commit}" == "true" ]]; then
