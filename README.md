@@ -91,7 +91,7 @@ Now go ahead and fork both repositories into your GitHub account.
 
 For this application we have a very simple CI pipeline that uses GitHub Actions to build a docker image and publishes it to GitHub Packages. Take a look at the workflow definition in the [.github/workflows](.github/workflows) directory.
 
-To setup our first guestbook image we will manually trigger a workflow run at https://github.com/isouza-daitan/guestbook-go/actions/workflows/ci.yaml
+To setup our first guestbook image we will manually trigger a workflow run at [the Actions tab](../../actions/workflows/ci.yaml)
 
 ### ArgoCD Applications
 
