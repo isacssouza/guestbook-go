@@ -87,7 +87,7 @@ the Kubernetes and ArgoCD manifests to deploy the application. Using a separate 
 
 Now go ahead and fork both repositories into your GitHub account. After forking, clone them to your local environment.
 
-### Change github URLs
+### Change GitHub URLs
 
 There are some files in the `guestbook-go-config` repo with URLs for the `isouza-daitan` GitHub user. You will need to change those to use your username.
 You can use the command below on the root of the `guestbook-go-config` repo. Don't forget to change `<github-user>` to the actual username.
