@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Check VERSION file
     steps:
       - uses: actions/checkout@v2
         with:
@@ -21,7 +20,7 @@ jobs:
           files: VERSION
 
       - name: Fail if VERSION was not changed
-        if: steps.changed-files-specific.outputs.any_changed != 'true'
+        if: steps.changed-files.outputs.any_changed == 'false'
         run: |
           echo "You must update the version in the VERSION file."
           exit 1
