@@ -85,12 +85,12 @@ to a PR environment using Git.
 This repository contains the application source code and the [guestbook-go-config](../../../guestbook-go-config) repository contains 
 the Kubernetes and ArgoCD manifests to deploy the application. Using a separate repository for configuration is one of the best practices of GitOps.
 
-Now go ahead and fork both repositories into your GitHub account.
+Now go ahead and fork both repositories into your GitHub account. After forking, clone them to your local environment.
 
 ### Change github URLs
 
-There are some files in the guestbook-go-config repo with URLs for the `isouza-daitan` GitHub user. You will need to change those to use your username.
-You can use the command below. Don't forget to change `<github-user>` to the actual username.
+There are some files in the `guestbook-go-config` repo with URLs for the `isouza-daitan` GitHub user. You will need to change those to use your username.
+You can use the command below on the root of the `guestbook-go-config` repo. Don't forget to change `<github-user>` to the actual username.
 
 ```sh
 find . -name '*.yaml' | xargs sed -i'' 's/isouza-daitan/<github-user>/g'
@@ -104,7 +104,7 @@ In order to checkout and push to the config repo, we will need a GitHub PAT conf
 
 First, create the PAT using [these instructions](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token). The PAT only needs the `repo` permissions.
 
-Copy the token and create a new secret in the [Settings page](https://github.com/isouza-daitan/guestbook-go/settings/secrets/actions). Name it `CONFIG_GITHUB_TOKEN`.
+Copy the token and create a new secret in the [Settings page](https://github.com/isouza-daitan/guestbook-go/settings/secrets/actions) of the `guestbook-go` repo. Name it `CONFIG_GITHUB_TOKEN`.
 
 ### Continuous Integration
 
