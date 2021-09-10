@@ -1,0 +1,26 @@
+name: Check VERSION file
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v1.1.2
+        with:
+          files: VERSION
+
+      - name: Fail if VERSION was not changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: |
+          echo "You must update the version in the VERSION file."
+          exit 1
