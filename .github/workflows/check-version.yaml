@@ -22,7 +22,7 @@ jobs:
 
       - name: Run step if any of the listed files above change
         # if the VERSION file was not changed
-        if: steps.changed-files-specific.outputs.any_changed == 'false'
+        if: steps.changed-files-specific.outputs.any_changed != 'true'
         run: |
           echo "You must update the version in the VERSION file."
           exit 1
