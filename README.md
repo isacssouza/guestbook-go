@@ -98,6 +98,14 @@ find . -name '*.yaml' | xargs sed -i'' 's/isouza-daitan/<github-user>/g'
 
 Now review, commit and push the changes.
 
+### Setup Personal Access Token (PAT)
+
+In order to checkout and push to the config repo, we will need a GitHub PAT configured as a secret, which will be used by GitHub Actions.
+
+First, create the PAT using [these instructions](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token). The PAT only needs the `repo` permissions.
+
+Copy the token and create a new secret in the [Settings page](https://github.com/isouza-daitan/guestbook-go/settings/secrets/actions). Name it `CONFIG_GITHUB_TOKEN`.
+
 ### Continuous Integration
 
 For this application we have a very simple CI pipeline that uses GitHub Actions to build a docker image and publishes it to GitHub Packages. Take a look at the workflow definition in the [.github/workflows](.github/workflows) directory.
