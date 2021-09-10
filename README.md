@@ -87,6 +87,17 @@ the Kubernetes and ArgoCD manifests to deploy the application. Using a separate 
 
 Now go ahead and fork both repositories into your GitHub account.
 
+### Change github URLs
+
+There are some files in the guestbook-go-config repo with URLs for the `isouza-daitan` GitHub user. You will need to change those to use your username.
+You can use the command below. Don't forget to change `<github-user>` to the actual username.
+
+```sh
+find . -name '*.yaml' | xargs sed -i'' 's/isouza-daitan/<github-user>/g'
+```
+
+Now review, commit and push the changes.
+
 ### Continuous Integration
 
 For this application we have a very simple CI pipeline that uses GitHub Actions to build a docker image and publishes it to GitHub Packages. Take a look at the workflow definition in the [.github/workflows](.github/workflows) directory.
