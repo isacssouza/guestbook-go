@@ -40,7 +40,9 @@ func ListRangeHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func ListPushHandler(rw http.ResponseWriter, req *http.Request) {
-	key := mux.Vars(req)["key"]
+	key   :=  mux.Vars(req) ["key"]
+
+	/* testing block comment */
 	value := mux.Vars(req)["value"]
 	list := simpleredis.NewList(redisPool, key)
 	HandleError(nil, list.Add(value))
