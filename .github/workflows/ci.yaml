@@ -46,8 +46,6 @@ jobs:
           echo "::set-output name=env-name::${env_name}"
           echo "::set-output name=app-name::${app_name}"
 
-      # - uses: actions/checkout@v2
-
       - name: Build image
         env:
           VERSION: ${{ steps.variables.outputs.version }}
