@@ -14,7 +14,7 @@ The commands below assume you can run docker without `sudo`, check [this link](h
 `kubectl` is the CLI for Kubernetes. You can use it to get, create, modify or delete resources in the cluster.
 
 ```sh
-curl -LO "https://dl.k8s.io/release/v1.21.3/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 mv kubectl ${HOME}/bin/kubectl
 chmod +x ${HOME}/bin/kubectl
 kubectl version
@@ -26,7 +26,7 @@ Install a release for your OS from https://github.com/rancher/k3d/releases.
 Download the binary, copy it to a place in your PATH and give it execution permission.
 
 ```sh
-curl -LO "https://github.com/rancher/k3d/releases/download/v4.4.7/k3d-linux-amd64"
+curl -LO "https://github.com/k3d-io/k3d/releases/download/v5.4.1/k3d-linux-amd64"
 mv k3d-linux-amd64 ${HOME}/bin/k3d
 chmod +x ${HOME}/bin/k3d
 ```
