@@ -114,12 +114,13 @@ To setup our first guestbook image we will manually trigger a workflow run at [t
 
 ### ArgoCD Applications
 
-From https://argoproj.github.io/argo-cd/operator-manual/declarative-setup/#applications:
+From https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#applications:
 
 The Application CRD is the Kubernetes resource object representing a deployed application instance in an environment. It is defined by two key pieces of information:
 
-source reference to the desired state in Git (repository, revision, path, environment)
-destination reference to the target cluster and namespace. For the cluster one of server or name can be used, but not both (which will result in an error). Under the hood when the server is missing, it is calculated based on the name and used for any operations.
+- `source` reference to the desired state in Git (repository, revision, path, environment)
+- `destination` reference to the target cluster and namespace. For the cluster one of server or name can be used, but not both (which will result in an error). Under the hood when the server is missing, it is calculated based on the name and used for any operations.
+
 A minimal Application spec is as follows:
 
 ```yaml
@@ -155,7 +156,7 @@ And access the guestbook at http://localhost:8080/
 
 With ArgoCD you can create an app that creates other apps, which in turn can create other apps. This allows you to declaratively manage a group of apps that can be deployed and configured in concert.
 
-Let's create an app of apps to manage our guestbook environments:
+Let's create an app of apps to manage our guestbook environments. Go to the `guestbook-go-config` repository and execute:
 ```sh
 kubectl apply -f guestbook-apps.yaml
 ```
